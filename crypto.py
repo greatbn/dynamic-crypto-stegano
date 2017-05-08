@@ -116,11 +116,9 @@ if __name__ == '__main__':
     c = Crypto(key=key,
                text=plain_text)
     C = c.encrypt()
+    print C
     print "+++++++++++++++++++++"
     print "[+] Encrypted to binary ", C
-    with open('cipher', 'w') as f:
-        f.write(C)
-    print '[+] Writen to file'
     p = Crypto(key=key,
                text=C)
     P = p.decrypt()
