@@ -1,0 +1,85 @@
+#!/usr/bin/python
+"""
+Author: Sa Pham saphi070@gmail.com
+Main program
+"""
+import argparse
+import sys
+
+from argparse import RawTextHelpFormatter
+
+from process import DynamicStegProcess
+
+
+class DynamicSteg(object):
+    def __init__(self):
+        """
+        Main
+        """
+        parser = argparse.ArgumentParser(description="Encrypt/Decrypt message "
+                                         "and hide/extract message from image",
+                                         usage="""dynamicsteg <command> [args]
+The command used for this application are:
+    hide    Hide a message in a picture
+    extract Extract a message from a picture
+""")
+        parser.add_argument('command', help='Subcommand to run')
+        args = parser.parse_args(sys.argv[1:2])
+        if not hasattr(self, args.command):
+            print 'Unrecognized command'
+            sys.exit(1)
+        getattr(self, args.command)()
+
+    def hide(self):
+        """
+        Hide function
+        """
+        hide_parser = argparse.ArgumentParser(
+            description=""" From Sa Pham With Love
+            Hide a message to a image and save it to new image
+            """,
+            formatter_class=RawTextHelpFormatter)
+        hide_parser.add_argument('--message', '-m', dest='message',
+                                 help='A message will be store', required=True)
+        hide_parser.add_argument('--encrypt-key', '-k', dest='key',
+                                 help='A key to encrypt '
+                                 'a message (32 charaters)',
+                                 required=True)
+        hide_parser.add_argument('--image', '-i', dest='source_image',
+                                 help='A image will be use to cover a message',
+                                 required=True)
+        hide_parser.add_argument('--dest', '-d', dest='dest_image',
+                                 help='A destination to save result image',
+                                 required=True)
+        args = hide_parser.parse_args(sys.argv[2:])
+        hide = DynamicStegProcess()
+        hide.start_embed(message=args.message,
+                         key=args.key,
+                         source_image=args.source_image,
+                         dest_image=args.dest_image)
+
+    def extract(self):
+        """
+        Extract function
+        """
+        extract_parser = argparse.ArgumentParser(
+            description="""From Sa Pham With Love
+            Extract encrypted message in a image and print them
+            """,
+            formatter_class=RawTextHelpFormatter)
+        extract_parser.add_argument('--encrypt-key', '-k', dest='key',
+                                    required=True,
+                                    help='A key to encrypt '
+                                    'a message (32 charaters)')
+        extract_parser.add_argument('--image', '-i', dest='source_image',
+                                    required=True,
+                                    help='A image will be use'
+                                    ' to cover a message')
+        args = extract_parser.parse_args(sys.argv[2:])
+        extract = DynamicStegProcess()
+        extract.start_retriev(image_retriev=args.source_image,
+                              key=args.key)
+
+
+if __name__ == '__main__':
+    DynamicSteg()
