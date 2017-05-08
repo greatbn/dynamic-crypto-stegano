@@ -4,6 +4,8 @@ Author: Sa Phi saphi070@gmail.com
 Perform embed and retriev binary to/from image
 """
 import sys
+import re
+
 from common import log
 LOG = log.setup_log(__name__)
 
@@ -16,19 +18,28 @@ class Stegano(object):
         """
         Embed function
         """
-        with open(self.image, 'rb') as image:
-            f = image.read()
-            b_array = bytearray(f)
+        try:
+            with open(self.image, 'rb') as image:
+                f = image.read()
+                b_array = bytearray(f)
+        except IOError:
+            print '[-] Cannot open image ', self.image
         if len(b_array) < (3300 + len(binary)*8):
             LOG.error('The image is too small to process')
             sys.exit(0)
         # embed length of cipher binary
-        length = format(len(binary), '08b')
-        for i in range(0, len(length), 2):
+        # convert length to string -> ascii -> binary
+        # example: 120 => 49 50 48 => 00110001 00110010 00110000
+        length = str(len(binary))
+        len_in_bin = ''
+        for i in length:
+            len_in_bin += format(ord(i), '08b')
+        for i in range(0, len(len_in_bin), 2):
             origin = format(b_array[3001+i/2], '08b')
-            origin = origin[:6] + length[i] + origin[7:]
-            origin = origin[:7] + length[i+1] + origin[8:]
+            origin = origin[:6] + len_in_bin[i] + origin[7:]
+            origin = origin[:7] + len_in_bin[i+1] + origin[8:]
             b_array[3001+i/2] = int(origin, 2)
+
         # embed cipher text
         next_index1 = 6
         next_index2 = 7
@@ -57,16 +68,25 @@ class Stegano(object):
         """
         Retriev function
         """
-        with open(self.image, 'rb') as image:
-            f = image.read()
-            b_array = bytearray(f)
+        try:
+            with open(self.image, 'rb') as image:
+                f = image.read()
+                b_array = bytearray(f)
+        except IOError:
+            print "[-] Cannot open image ", self.image
         # Retriev length of embedded message
         length = ''
-        for i in range(0, 4):
-            embed_byte = '{0:8b}'.format(b_array[3001+i])
+        len_in_dec = ''
+        for i in range(300):
+            embed_byte = format(b_array[3001+i], '08b')
             length += embed_byte[6]
             length += embed_byte[7]
-        length = int(length, 2)
+            if len(length) == 8:
+                len_in_dec += chr(int(length, 2))
+                length = ''
+
+        length = re.findall('\d+', len_in_dec)
+        length = int(length[0])
         # Retriev message
         next_index1 = 6
         next_index2 = 7
